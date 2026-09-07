@@ -1,0 +1,21 @@
+import * as THREE from 'three';
+import {REST,JOINTS,type Pose} from './motion.ts';
+export type Zone='head'|'back'|'belly';
+export type ServoControl={enabled:boolean;blocked:boolean};
+export type Hardware={resetSerial:number;touch:Record<Zone,boolean>;touchMode:boolean;human:{enabled:boolean;x:number;z:number;moving:boolean};radarEnabled:boolean;range:number;imuEnabled:boolean;yawZero:number;servos:Record<keyof Pose,ServoControl>;servoSpeed:number;voltage:number};
+export const INITIAL_HARDWARE:Hardware={resetSerial:0,touch:{head:false,back:false,belly:false},touchMode:false,human:{enabled:true,x:0,z:3,moving:false},radarEnabled:true,range:6,imuEnabled:true,yawZero:0,servos:Object.fromEntries(JOINTS.map(j=>[j.key,{enabled:true,blocked:false}])) as Hardware['servos'],servoSpeed:120,voltage:6};
+export type ServoState={key:keyof Pose;target:number;angle:number;speed:number;load:number;temperature:number;status:string;overloadTime:number;fault:boolean};
+export const motorAngle=(key:keyof Pose,value:number)=>key==='lids'?90+value*.6:150+value;
+export const jointAngle=(key:keyof Pose,value:number)=>key==='lids'?(value-90)/.6:value-150;
+export const initialServos=():ServoState[]=>JOINTS.map(j=>({key:j.key,target:motorAngle(j.key,REST[j.key]),angle:motorAngle(j.key,REST[j.key]),speed:0,load:0,temperature:25,status:'Holding',overloadTime:0,fault:false}));
+export function stepServo(s:ServoState,command:number,c:ServoControl,rate:number,voltage:number,dt:number):ServoState{
+ const target=Math.max(0,Math.min(300,motorAngle(s.key,command))),error=target-s.angle;const blocked=c.enabled&&c.blocked&&Math.abs(error)>.5;const overloadTime=blocked?s.overloadTime+dt:0;const fault=c.enabled&&(s.fault||overloadTime>=2||s.temperature>=70);const canMove=c.enabled&&!c.blocked&&!fault&&voltage>=4&&voltage<=7.4;const step=canMove?Math.sign(error)*Math.min(Math.abs(error),rate*dt):0;const speed=step/Math.max(dt,.001);const load=!c.enabled||fault?0:blocked?100:Math.min(70,4+Math.abs(speed)/600*40);const temperature=s.temperature+(load*.045-(s.temperature-25)*.12)*dt;
+ const status=!c.enabled?'Torque off':fault?'Protection':blocked?'Blocked':Math.abs(error)>.5?'Moving':'Holding';return {...s,target,angle:s.angle+step,speed,load,temperature,overloadTime,fault:c.enabled?fault:false,status};
+}
+export function radarState(h:Hardware,position:THREE.Vector3,orientation:THREE.Quaternion){const delta=new THREE.Vector3(h.human.x,1, h.human.z).sub(position);const distance=delta.length();const direction=delta.clone().applyQuaternion(orientation.clone().invert());const angle=Math.acos(THREE.MathUtils.clamp(direction.z/Math.max(distance,.001),-1,1))*180/Math.PI;const detected=h.radarEnabled&&h.human.enabled&&distance>=.2&&distance<=h.range&&angle<=60;return {detected,distance,angle,state:!h.radarEnabled?'Disabled':!h.human.enabled?'No person':detected?(h.human.moving?'Movement':'Presence'):distance>h.range?'Out of range':distance<.2?'Too close':'Outside field of view',movingDistance:detected&&h.human.moving?distance:null};}
+export function gyroRate(previous:THREE.Quaternion,current:THREE.Quaternion,dt:number){const delta=previous.clone().invert().multiply(current);if(delta.w<0){delta.x*=-1;delta.y*=-1;delta.z*=-1;delta.w*=-1;}const angle=2*Math.acos(THREE.MathUtils.clamp(delta.w,-1,1));const sine=Math.sqrt(Math.max(0,1-delta.w*delta.w));return sine<1e-6?new THREE.Vector3():new THREE.Vector3(delta.x,delta.y,delta.z).multiplyScalar(angle/sine/Math.max(dt,.001)*180/Math.PI);}
+export function accelerometer(linear:THREE.Vector3,q:THREE.Quaternion){return linear.clone().add(new THREE.Vector3(0,9.81,0)).applyQuaternion(q.clone().invert());}
+export type Telemetry={time:number;actual:Pose;servos:ServoState[];accel:number[];gyro:number[];orientation:number[];clipped:boolean;radar:ReturnType<typeof radarState>;bodyHeight:number};
+export const EMPTY_TELEMETRY:Telemetry={time:0,actual:REST,servos:initialServos(),accel:[0,9.81,0],gyro:[0,0,0],orientation:[0,0,0],clipped:false,radar:{detected:false,distance:0,angle:0,state:'Starting',movingDistance:null},bodyHeight:0};
+
+
