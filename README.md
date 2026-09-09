@@ -64,3 +64,9 @@ Use branches and pull requests for future changes. Keep the working local projec
 This is a concept simulator, not a motor-sizing or safety-validation tool. Servo load and temperature are illustrative. Plush deformation, detailed linkage loads and robot-to-robot collisions are not simulated. The V2 outer CAD is retained at native scale and 1.5 kg is a target mass.
 
 No open-source license is granted for the Boo-specific code or design assets by this repository. Third-party libraries and bundled decoder files retain their respective licenses.
+
+## Voice and hearing simulation
+
+The Voice & Hearing tab sends five scripted phrases or a loud-sound cue from the shared person marker. Use Person X/Z or movement to position the source; each Boo uses distance, yaw, noise and sleep state to evaluate detection independently. Selected-only mode isolates a test. Left/right meters are illustrative, not a model of a specific microphone.
+
+Browser speech synthesis speaks the phrases where available; Web Audio generates six placeholder vocal sounds. No microphone is recorded, no speech is recognized, and no LLM is connected. Touch held during speech produces a contented response. Repeated recognized calls within 15 seconds wake a sleepy Boo. Voice motion temporarily suspends sensor scenarios and restores them after completion; manual joint commands take priority. Audio can be muted, previewed, replayed or stopped independently of the existing movement Pause control.

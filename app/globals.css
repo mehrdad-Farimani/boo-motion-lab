@@ -70,3 +70,5 @@ main>header{flex-shrink:0;padding:14px 22px}
  .control-content{padding:16px}.control-nav{min-height:48px;padding:5px}.control-nav [data-slot=tabs-trigger]{padding:8px}
 }
 @media(max-width:380px){.control-content .body-controls{grid-template-columns:1fr}.control-content .env-control{grid-template-columns:1fr}.lab-layout .time{font-size:11px}.brand-icon{display:none}}
+
+.voice-panel h3{margin:24px 0 12px}.voice-cues{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.voice-check{display:flex;gap:10px;align-items:center;margin:14px 0;font-size:14px}.voice-slider{display:grid;gap:8px;margin:18px 0;font-size:14px}.voice-slider input{width:100%;accent-color:#365d81}.voice-readout{display:grid;gap:10px;padding:16px;background:#edf3f8;border-radius:12px;margin:16px 0}.voice-readout label{display:flex;gap:12px;align-items:center;font-size:14px}.voice-readout meter{flex:1;min-width:0}.voice-events{padding-left:20px;font-size:14px;line-height:1.6}.voice-events li{margin:8px 0}.control-nav{overflow-x:auto;flex-shrink:0}.control-nav [data-slot=tabs-trigger]{flex-shrink:0}
