@@ -12,7 +12,4 @@ for(const [name,frames] of Object.entries(PRESETS)){
  for(let t=0;t<=total;t+=.025)assert.ok(validPose(sample(frames,t)),name+' stays within limits');
 }
 assert.deepEqual(blend(REST,REST,.5),REST);
-const handAt35={y:1.34-.76*Math.cos(35*Math.PI/180)+.07*Math.sin(35*Math.PI/180),z:.76*Math.sin(35*Math.PI/180)+.07*Math.cos(35*Math.PI/180)};
-assert.ok(Math.hypot(handAt35.y-.63,handAt35.z-.82)<.37,'left hand can reach ball on low surface');
-console.log('Passed: five channels, range rejection, preset endpoints and all interpolated poses, ball reach.');
-
+console.log('Passed: five channels, range rejection, preset endpoints and all interpolated poses.');

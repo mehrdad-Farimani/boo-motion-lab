@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+/.cad-export-deps/
 /.pnp
 .pnp.*
 .yarn/*
@@ -36,3 +37,13 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# Local CAD tools, exports and transient compiler state
+/scripts/
+/work-inspect-cad.py
+*.tsbuildinfo
+*.step
+*.stp
+*.zip
+*.pfx
+*.key

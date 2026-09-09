@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import {DEFAULT_SCENARIOS,initialScenario,stepScenario,reaction} from './app/scenarios.ts';
+import {INITIAL_HARDWARE,EMPTY_TELEMETRY,initialServos,stepServo,jointAngle} from './app/hardware.ts';
+import {REST,validPose,sample} from './app/motion.ts';
+const options={...DEFAULT_SCENARIOS,human:true};
+const hardware=()=>structuredClone(INITIAL_HARDWARE);
+const telemetry=(time,extra={})=>({...structuredClone(EMPTY_TELEMETRY),time,...extra});
+let state=initialScenario(),h=hardware();
+let r=stepScenario(state,options,h,telemetry(1),REST);
+assert.equal(r.pose,null,'stationary gravity does not trigger IMU');
+h.touch.head=true;h.touch.belly=true;
+r=stepScenario(r.state,options,h,telemetry(2),REST);
+assert.equal(r.state.active.rule,'head','head takes priority');
+const active=r.state.active;
+r=stepScenario(r.state,options,h,telemetry(2.5),r.pose);
+assert.equal(r.state.active.start,active.start,'held sensor does not restart');
+assert.ok(r.pose.turn<0,'head actually shakes');
+r=stepScenario(r.state,options,h,telemetry(8),r.pose);
+assert.equal(r.state.active,null);assert.deepEqual(r.pose,REST,'reaction returns to starting pose');
+r=stepScenario(r.state,options,h,telemetry(9),REST);assert.equal(r.state.active,null,'held inputs are not queued');
+h.touch.head=false;h.touch.belly=false;r=stepScenario(r.state,options,h,telemetry(10),REST);
+h.touch.head=true;r=stepScenario(r.state,options,h,telemetry(11),REST);assert.equal(r.state.active.rule,'head','release rearms touch');
+r=stepScenario(r.state,{...options,enabled:false},h,telemetry(11.1),r.pose);assert.equal(r.pose,null);assert.equal(r.state.active,null,'pause cancels motion');
+h=hardware();state=initialScenario();
+r=stepScenario(state,options,h,telemetry(1,{orientation:[30,0,0]}),REST);assert.equal(r.state.active.rule,'imu');
+r=stepScenario(r.state,options,h,telemetry(2,{orientation:[30,0,0]}),REST);assert.ok(r.pose.left>REST.left&&r.pose.right>REST.right,'IMU drives both hands');
+r=stepScenario(r.state,options,h,telemetry(6,{orientation:[30,0,0]}),REST);
+r=stepScenario(r.state,options,h,telemetry(10,{orientation:[30,0,0]}),REST);assert.equal(r.state.active,null,'static tilted pose does not loop');
+r=stepScenario(r.state,options,h,telemetry(11),REST);
+r=stepScenario(r.state,options,h,telemetry(12,{gyro:[0,40,0]}),REST);assert.equal(r.state.active.rule,'imu','settling rearms motion trigger');
+h.imuEnabled=false;r=stepScenario(r.state,options,h,telemetry(12.1,{gyro:[0,40,0]}),REST);assert.equal(r.state.active,null,'disabled IMU cancels its reaction');
+const seen=telemetry(1,{radar:{detected:true},humanAim:{turn:20,tilt:-10}});
+h=hardware();r=stepScenario(initialScenario(),options,h,seen,REST);assert.equal(r.pose.turn,20);assert.equal(r.status,'Following person');
+r=stepScenario(r.state,options,h,{...seen,time:2,humanAim:{turn:-20,tilt:5}},r.pose);assert.equal(r.pose.turn,-20,'neck follows changing position');
+h.radarEnabled=false;r=stepScenario(r.state,options,h,telemetry(3),r.pose);assert.equal(r.pose.turn,REST.turn,'loss of detection returns to rest');
+for(const rule of ['head','back','belly','imu']){const frames=reaction(rule,REST);for(let t=0;t<5;t+=.02)assert.ok(validPose(sample(frames,t)),rule+' keeps all joint limits');}
+// Check reaction commands pass through the existing actuator controls.
+let servo=initialServos()[3];const frames=reaction('head',REST);let left=false,right=false;
+for(let t=0;t<3;t+=.02){servo=stepServo(servo,sample(frames,t).turn,{enabled:true,blocked:false},120,6,.02);const angle=jointAngle('turn',servo.angle);left ||= angle<-15;right ||= angle>15;}
+assert.ok(left&&right,'actual servo turns in both directions');
+const off=stepServo(servo,60,{enabled:false,blocked:false},120,6,.1);assert.equal(off.angle,servo.angle,'automation does not override torque off');
+console.log('Passed: trigger priorities, press edges, retrigger prevention, motion hysteresis, disabled sensors, follow/loss, joint bounds and actual servo reaction.');

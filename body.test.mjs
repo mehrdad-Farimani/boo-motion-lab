@@ -7,7 +7,7 @@ assert.ok(!validBody({...BODY_REST,x:8}));
 assert.ok(!validBody({...BODY_REST,lift:-1}));
 for(const [name,p] of Object.entries(POSTURES)){
  const rotation=new THREE.Quaternion().setFromEuler(new THREE.Euler(p.pitch*Math.PI/180,0,p.roll*Math.PI/180,'YXZ'));
- const forward=new THREE.Vector3(0,0,1).applyQuaternion(rotation);
+ const forward=new THREE.Vector3(0,-1,0).applyQuaternion(rotation);
  if(name==='Sleep on belly')assert.ok(forward.y<-.999);
  if(name==='Sleep on back')assert.ok(forward.y>.999);
  if(name==='Sitting')assert.ok(forward.z>.999);
