@@ -47,6 +47,12 @@ The tests cover joint interpolation, servo and sensor behavior, gravity, ground 
 
 ## Privacy and deployment
 
+### Optional browser-only build
+
+`npm run build:pages` creates `dist-pages/`, a standalone static build using the `/boo-motion-lab/` base path. `npm run preview:pages` serves that build locally. The normal development and Sites build commands remain available. No publication is triggered by either command.
+
+GitHub Pages on a personal account serves a public website, even when the source repository is private. Private-repository Pages also requires an eligible GitHub plan. Publishing is intentionally not enabled until the owner confirms the website audience. Private access-controlled Pages requires an eligible Enterprise Cloud organization; a personal private repository is not a website access control.
+
 Keep this repository private. Repository collaborators can download the included application and GLB. Mechanical STEP exports, local CAD tooling, dependency folders, generated builds and environment files are excluded.
 
 `.openai/hosting.json` identifies the existing Sites project for the owner; it contains no authentication credential. Its presence does not grant collaborators permission to publish. The repository does not automatically deploy, enable GitHub Pages or change access to the hosted simulator. Keep credentials out of Git, including commit history. Use platform-managed secrets if future server features require them.
