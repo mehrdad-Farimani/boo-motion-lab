@@ -9,7 +9,7 @@ export const JOINTS = [
 ] as const;
 export type Frame = {pose:Pose; duration:number};
 export function blend(a:Pose,b:Pose,t:number):Pose { const k=t*t*(3-2*t); return Object.fromEntries(Object.keys(a).map(j=>[j,a[j as keyof Pose]+(b[j as keyof Pose]-a[j as keyof Pose])*k])) as Pose; }
-export function sample(frames:Frame[],time:number):Pose {let start=0;for(let i=0;i<frames.length-1;i++){let duration=frames[i].duration;if(time<start+duration)return blend(frames[i].pose,frames[i+1].pose,(time-start)/duration);start+=duration;}return {...frames[frames.length-1].pose};}
+export function sample(frames:Frame[],time:number):Pose {let start=0;for(let i=0;i<frames.length-1;i++){const duration=frames[i].duration;if(time<start+duration)return blend(frames[i].pose,frames[i+1].pose,(time-start)/duration);start+=duration;}return {...frames[frames.length-1].pose};}
 export const PRESETS:Record<string,Frame[]> = {
  'Wake up':[{pose:REST,duration:2},{pose:{...REST,lids:35,tilt:15},duration:1.4},{pose:{...REST,lids:0,tilt:-8,left:42,right:42},duration:1.8},{pose:{...REST,lids:15,tilt:5},duration:1}],
  'Sleepy wave':[{pose:REST,duration:1.5},{pose:{...REST,tilt:12,lids:48,right:90},duration:.6},{pose:{...REST,tilt:10,lids:38,right:62},duration:.6},{pose:{...REST,tilt:10,lids:38,right:105},duration:.6},{pose:{...REST,tilt:10,lids:45,right:62},duration:.6},{pose:{...REST,tilt:10,lids:45,right:100},duration:1.8},{pose:REST,duration:1}],

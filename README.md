@@ -70,3 +70,11 @@ No open-source license is granted for the Boo-specific code or design assets by 
 The Voice & Hearing tab sends five scripted phrases or a loud-sound cue from the shared person marker. Use Person X/Z or movement to position the source; each Boo uses distance, yaw, noise and sleep state to evaluate detection independently. Selected-only mode isolates a test. Left/right meters are illustrative, not a model of a specific microphone.
 
 Browser speech synthesis speaks the phrases where available; Web Audio generates six placeholder vocal sounds. No microphone is recorded, no speech is recognized, and no LLM is connected. Touch held during speech produces a contented response. Repeated recognized calls within 15 seconds wake a sleepy Boo. Voice motion temporarily suspends sensor scenarios and restores them after completion; manual joint commands take priority. Audio can be muted, previewed, replayed or stopped independently of the existing movement Pause control.
+
+## Regression checks and maintenance
+
+Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. For the browser suite, run `npm run test:browser`; it starts the local server automatically or reuses one on port 3000. It uses installed Microsoft Edge by default; set `PLAYWRIGHT_CHANNEL=chrome` for Chrome. The tests cover five robots, manual precedence over delayed voice, slider visibility after tab changes, posture controls, touch release, unique control IDs, reset playback, movement import/export and desktop/mobile layout. Browser artifacts go in ignored `outputs/browser-tests`.
+
+Only the four UI primitives used by the simulator are kept. The original procedural robot was superseded by the CAD model. CAD exports, URDF references and mechanical packages in ignored output folders are retained intentionally. The Draco JavaScript decoder is kept as a fallback for the WASM decoder.
+
+The sharp override pins the patched 0.35.4 release for the local Cloudflare tooling; revisit it when the upstream dependency catches up. Dependency audit on 2026-09-09 reported zero known vulnerabilities after the framework update. This does not replace testing on real hardware.

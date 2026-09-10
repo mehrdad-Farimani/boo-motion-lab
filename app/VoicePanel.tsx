@@ -1,15 +1,15 @@
 'use client';
-import {useEffect,useRef,useState} from 'react';
+import {useEffect,useLayoutEffect,useRef,useState} from 'react';
 import type {BodyPose} from './body';
 import type {Hardware,Telemetry} from './hardware';
 import type {Pose,Frame} from './motion';
 import {CUES,SOUNDS,hearing,voiceResponse,type Cue,type Sound} from './voice';
-type Controller={pose:Pose;body:BodyPose;hardware:Hardware;telemetry:Telemetry;playVoice:(name:string,frames:Frame[])=>void};
-type Feed={status:string;sound?:Sound;until:number;left:number;right:number};
+type Controller={commandRevision:number;pose:Pose;body:BodyPose;hardware:Hardware;telemetry:Telemetry;playVoice:(name:string,frames:Frame[])=>void};
+type Feed={reset:number;status:string;sound?:Sound;until:number;left:number;right:number};
 export default function VoicePanel({controllers,present,selected,human,setHuman}:{controllers:Controller[];present:number[];selected:number;human:Hardware['human'];setHuman:React.Dispatch<React.SetStateAction<Hardware['human']>>}){
  const [loudness,setLoudness]=useState(65),[noise,setNoise]=useState(30),[only,setOnly]=useState(false),[volume,setVolume]=useState(35),[muted,setMuted]=useState(false),[busy,setBusy]=useState(false),[feed,setFeed]=useState<Record<number,Feed>>({}),[events,setEvents]=useState<string[]>([]),[audioError,setAudioError]=useState('');
- const latest=useRef({controllers,present,muted,volume});latest.current={controllers,present,muted,volume};
- const audio=useRef<AudioContext|null>(null),timers=useRef<ReturnType<typeof setTimeout>[]>([]),lastCalls=useRef<Record<number,number>>({}),generation=useRef(0);
+ const latest=useRef({controllers,present,muted,volume});useLayoutEffect(()=>{latest.current={controllers,present,muted,volume};});
+ const audio=useRef<AudioContext|null>(null),timers=useRef<ReturnType<typeof setTimeout>[]>([]),lastCalls=useRef<Record<string,number>>({}),generation=useRef(0);
  function log(s:string){setEvents(e=>[new Date().toLocaleTimeString()+' · '+s,...e].slice(0,18));}
  function sound(name:Sound,delay=0){
   if(latest.current.muted)return;
@@ -28,25 +28,25 @@ export default function VoicePanel({controllers,present,selected,human,setHuman}
   const targets=only?[selected]:present;
   for(const id of targets){const c=controllers[id],source=c.telemetry.time?c.telemetry.humanPosition:human;
    const h=hearing(source,c.body,cue==='Loud sound'?85:loudness,noise,c.pose.lids>75),heard=human.enabled&&h.detected,recognized=heard&&(h.recognized||cue==='Loud sound');
-   setFeed(f=>({...f,[id]:{status:heard?'Listening':'Not heard',until:Date.now()+1800,left:heard?h.left:0,right:heard?h.right:0}}));
+   setFeed(f=>({...f,[id]:{reset:c.hardware.resetSerial,status:heard?'Listening':'Not heard',until:Date.now()+1800,left:heard?h.left:0,right:heard?h.right:0}}));
    log('Boo '+(id+1)+' · '+(heard?'Sound detected':'Not heard')+' · '+h.distance.toFixed(1)+' m');
-   const reset=c.hardware.resetSerial;
-   timers.current.push(setTimeout(()=>{if(serial!==generation.current||!latest.current.present.includes(id)||latest.current.controllers[id].hardware.resetSerial!==reset)return;
+   const reset=c.hardware.resetSerial,revision=c.commandRevision;
+   timers.current.push(setTimeout(()=>{if(serial!==generation.current||!latest.current.present.includes(id)||latest.current.controllers[id].hardware.resetSerial!==reset||latest.current.controllers[id].commandRevision!==revision)return;
     const current=latest.current.controllers[id];
-    if(!recognized){setFeed(f=>({...f,[id]:{status:heard?'Sound only · cue unclear':'Not heard',until:Date.now()+1800,left:0,right:0}}));return;}
-    const repeated=Date.now()-(lastCalls.current[id]??0)<15000;lastCalls.current[id]=Date.now();
+    if(!recognized){setFeed(f=>({...f,[id]:{reset:c.hardware.resetSerial,status:heard?'Sound only · cue unclear':'Not heard',until:Date.now()+1800,left:0,right:0}}));return;}
+    const repeated=Date.now()-(lastCalls.current[id+":"+reset]??0)<15000;lastCalls.current[id+":"+reset]=Date.now();
     const response=voiceResponse(cue,current.pose,h.angle,Object.values(current.hardware.touch).some(Boolean),repeated);
     current.playVoice('Voice · '+cue,response.frames);sound(response.sound,id*.08);
-    setFeed(f=>({...f,[id]:{status:'Responding',sound:response.sound,until:Date.now()+2400,left:0,right:0}}));log('Boo '+(id+1)+' · '+cue+' → '+response.sound);
+    setFeed(f=>({...f,[id]:{reset:c.hardware.resetSerial,status:'Responding',sound:response.sound,until:Date.now()+2400,left:0,right:0}}));log('Boo '+(id+1)+' · '+cue+' → '+response.sound);
    },1800));
   }
   timers.current.push(setTimeout(()=>{if(serial===generation.current)setBusy(false);},4300));
  }
- const c=controllers[selected],h=hearing(c.telemetry.time?c.telemetry.humanPosition:human,c.body,loudness,noise,c.pose.lids>75),current=feed[selected];
+ const c=controllers[selected],h=hearing(c.telemetry.time?c.telemetry.humanPosition:human,c.body,loudness,noise,c.pose.lids>75),current=feed[selected]?.reset===c.hardware.resetSerial?feed[selected]:undefined;
  return <section className="voice-panel"><span className="overline">VOICE & HEARING / BOO {selected+1}</span><h2>Talk to Boo</h2><p className="muted">Scripted cues, browser-spoken phrases and six synthesized Boo sounds. No microphone recording or speech recognition.</p>
  <div className="voice-cues">{CUES.map(cue=><button key={cue} disabled={busy} onClick={()=>send(cue)}>{cue}</button>)}</div>
  <label className="voice-check"><input type="checkbox" checked={only} onChange={e=>setOnly(e.target.checked)}/> Selected Boo only</label>
- <div className="voice-readout" role="status"><strong>{current?.status??'Quiet'}</strong><span>{h.distance.toFixed(1)} m · {h.angle.toFixed(0)}° relative direction</span><label>Left microphone <meter min={0} max={100} value={current?.left??0}/></label><label>Right microphone <meter min={0} max={100} value={current?.right??0}/></label><span>Speaker: {current?.status==='Responding'?current.sound:'Quiet'}</span></div>
+ <output className="voice-readout"><strong>{current?.status??'Quiet'}</strong><span>{h.distance.toFixed(1)} m · {h.angle.toFixed(0)}° relative direction</span><label>Left microphone <meter min={0} max={100} value={current?.left??0}/></label><label>Right microphone <meter min={0} max={100} value={current?.right??0}/></label><span>Speaker: {current?.status==='Responding'?current.sound:'Quiet'}</span></output>
  <h3>Sound source</h3><p className="muted">The person in the scene is the speaker. Position and movement are shared with the radar controls.</p>
  <label className="voice-check"><input type="checkbox" checked={human.enabled} onChange={e=>setHuman(h=>({...h,enabled:e.target.checked}))}/> Person present</label>
  <label className="voice-check"><input type="checkbox" checked={human.moving} onChange={e=>setHuman(h=>({...h,moving:e.target.checked}))}/> Person moving</label>

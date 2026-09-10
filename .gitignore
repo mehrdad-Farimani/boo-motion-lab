@@ -48,3 +48,7 @@ next-env.d.ts
 *.zip
 *.pfx
 *.key
+
+# Browser test reports
+/test-results/
+/playwright-report/

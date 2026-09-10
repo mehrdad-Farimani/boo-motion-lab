@@ -6,9 +6,11 @@ import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
 import {buildV2} from './app/robotV2.ts';
 import {REST} from './app/motion.ts';
 import {BODY_REST,POSTURES,supportHeight} from './app/body.ts';
-const module={exports:{}};
-new Function('module','exports','require','__dirname',fs.readFileSync('public/draco/draco_decoder.js','utf8'))(module,module.exports,createRequire(import.meta.url),process.cwd()+'/public/draco');
-const draco=await module.exports({});
+const decoderModule={exports:{}};
+// Load the trusted vendored CommonJS decoder inside this ESM test.
+// oxlint-disable-next-line typescript/no-implied-eval
+new Function('module','exports','require','__dirname',fs.readFileSync('public/draco/draco_decoder.js','utf8'))(decoderModule,decoderModule.exports,createRequire(import.meta.url),process.cwd()+'/public/draco');
+const draco=await decoderModule.exports({});
 const decoder={preload(){},decodeDracoFile(buffer,callback,ids,types,space,reject){try{
  const dec=new draco.Decoder(),buf=new draco.DecoderBuffer();buf.Init(new Int8Array(buffer),buffer.byteLength);const mesh=new draco.Mesh();const status=dec.DecodeBufferToMesh(buf,mesh);assert.ok(status.ok());const geometry=new THREE.BufferGeometry();
  for(const [name,id] of Object.entries(ids)){const attr=dec.GetAttributeByUniqueId(mesh,id),values=new draco.DracoFloat32Array();dec.GetAttributeFloatForAllPoints(mesh,attr,values);const array=new Float32Array(values.size());for(let i=0;i<array.length;i++)array[i]=values.GetValue(i);geometry.setAttribute(name,new THREE.BufferAttribute(array,attr.num_components()));draco.destroy(values);}

@@ -1,9 +1,7 @@
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import {buildBoo,plushBounds} from './app/robot.ts';
-import {BOO_METRICS,PLAY,GRAVITY,potentialEnergy,kineticEnergy} from './app/metrics.ts';
-import {supportHeight,sphereExtents,advanceDrop,POSTURES} from './app/body.ts';
-import {REST} from './app/motion.ts';
+import {BOO_METRICS,GRAVITY,potentialEnergy,kineticEnergy} from './app/metrics.ts';
+import {advanceDrop} from './app/body.ts';
 import {INITIAL_HARDWARE,radarState} from './app/hardware.ts';
 const close=(a,b)=>assert.ok(Math.abs(a-b)<1e-8,`${a} ≈ ${b}`);
 close(potentialEnergy(.12),1.7658);close(kineticEnergy(Math.sqrt(2*GRAVITY*.12)),potentialEnergy(.12));

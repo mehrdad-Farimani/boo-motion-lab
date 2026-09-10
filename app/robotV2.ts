@@ -23,7 +23,7 @@ export function buildV2(raw:THREE.Group){
   else if(name==='head'||name==='head_structure'||name==='nose'||name.startsWith('cheek')||/^eye(_\d+)?$/.test(name))parent=head;
   parent.attach(part);
   part.visible=!name.endsWith('_structure');
-  part.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;o.geometry.computeBoundingBox();o.userData.part=name;if(part.visible)supportMeshes.push(o);if(parent===head||name.startsWith('eyelid'))o.userData.touchZone='head';}});
+  part.traverse(o=>{if(o instanceof THREE.Mesh){o.castShadow=true;o.receiveShadow=true;if(!o.geometry.boundingBox)o.geometry.computeBoundingBox();o.userData.part=name;if(part.visible)supportMeshes.push(o);if(parent===head||name.startsWith('eyelid'))o.userData.touchZone='head';}});
  }
  const bounds=new THREE.Box3();supportMeshes.forEach(m=>bounds.union(new THREE.Box3().setFromObject(m)));const dimensions=bounds.getSize(new THREE.Vector3());
  const hands=arms.map((arm,i)=>{const marker=new THREE.Mesh(new THREE.SphereGeometry(1,12,8),new THREE.MeshBasicMaterial({visible:false}));marker.position.set((i===0?.09:-.09)-arm.position.x,0,.225-arm.position.z);marker.scale.setScalar(.027);arm.add(marker);return marker;});
