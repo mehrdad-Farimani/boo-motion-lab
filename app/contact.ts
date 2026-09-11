@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import {PLAY} from './metrics.ts';
+import {surfaceAt} from './surfaces.ts';
+export {surfaceAt} from './surfaces.ts';
 export type ContactPoint={x:number;y:number;z:number;rear:boolean};
 // Sample real CAD surfaces, avoiding rotated bounding-box corners that do not
 // belong to the plush. Cache local samples; only transforms change per pose.
@@ -11,7 +12,6 @@ export function contactPoints(meshes:THREE.Mesh[],rig:THREE.Object3D):ContactPoi
  }
  return points;
 }
-export function surfaceAt(x:number,z:number){let y=Math.hypot(x,z)<=PLAY.rugRadius?PLAY.rugTop:0;if(Math.abs(x)<=PLAY.tableWidth/2&&Math.abs(z-PLAY.tableZ)<=PLAY.tableDepth/2)y=Math.max(y,PLAY.tableHeight);return y;}
 export function bellyContact(points:ContactPoint[],x:number,z:number,yaw:number){
  const yawRad=yaw*Math.PI/180,cy=Math.cos(yawRad),sy=Math.sin(yawRad);
  function evaluate(pitch:number){const a=pitch*Math.PI/180,c=Math.cos(a),s=Math.sin(a);let rearHeight=-Infinity,allHeight=-Infinity;

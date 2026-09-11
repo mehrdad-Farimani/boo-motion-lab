@@ -62,3 +62,26 @@ for(const [left,right,x,z,yaw] of [[0,0,0,0,0],[90,90,0,0,0],[90,0,0,0,0],[90,90
  if(left===90&&right===90){assert.ok(stance.pitch<0,'chest rocks upward');assert.ok(stance.penetration<=.0011,'hands clear support surface');}
 }
 console.log('Passed: grounded lower body during symmetric/asymmetric arm motion, yaw and off-rug positions; neutral rest unchanged.');
+
+// Furniture support uses the same footprint and height as the rendered room.
+const {PLACEMENTS,surfaceAt:roomSurfaceAt,SIDE_TABLE}=await import('./app/surfaces.ts');
+const {addRoom}=await import('./app/room.ts');
+const furnitureScene=new THREE.Scene();addRoom(furnitureScene);furnitureScene.updateMatrixWorld(true);
+for(const place of PLACEMENTS.filter(p=>p.name!=='Rug')){
+ const ray=new THREE.Raycaster(new THREE.Vector3(place.x,2,place.z),new THREE.Vector3(0,-1,0));
+ const hits=ray.intersectObjects(furnitureScene.children,true).filter(hit=>hit.object instanceof THREE.Mesh);
+ assert.ok(Math.abs(hits[0].point.y-roomSurfaceAt(place.x,place.z))<1e-6,'visible furniture height matches support: '+place.name);
+ for(const posture of Object.values(POSTURES)){
+  model.applyPose(REST);rig.position.set(place.x,0,place.z);rig.rotation.set(posture.pitch*Math.PI/180,place.yaw*Math.PI/180,posture.roll*Math.PI/180,'YXZ');rig.updateMatrixWorld(true);
+  rig.position.y=supportHeight(model.supportMeshes);rig.updateMatrixWorld(true);
+  assert.ok(Math.abs(supportHeight(model.supportMeshes))<1e-6,'all postures rest on '+place.name);
+  assert.ok(rig.position.y>=roomSurfaceAt(place.x,place.z),'Boo is above furniture');
+ }
+ rig.position.set(place.x,0,place.z);rig.rotation.set(0,place.yaw*Math.PI/180,0,'YXZ');rig.updateMatrixWorld(true);
+ const stance=bellyContact(contactPoints(model.supportMeshes,rig),place.x,place.z,place.yaw);
+ assert.ok(stance.penetration<.003,'belly clears '+place.name);
+ assert.ok(stance.height>roomSurfaceAt(place.x,place.z),'belly rests above '+place.name);
+}
+assert.equal(roomSurfaceAt(SIDE_TABLE.x+SIDE_TABLE.radius+.01,SIDE_TABLE.z),0,'leaving table edge restores floor');
+assert.equal(roomSurfaceAt(SIDE_TABLE.x,SIDE_TABLE.z,.1),0,'ball below table is not lifted through it');
+console.log('Passed: rendered furniture heights, rotated seat footprints, all three postures, belly support and table edges.');
