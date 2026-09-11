@@ -15,10 +15,10 @@ export function addRoom(scene:THREE.Scene){
  function cylinder(parent:THREE.Object3D,material:THREE.Material,x:number,y:number,z:number,top:number,bottom:number,height:number){
   const mesh=new THREE.Mesh(new THREE.CylinderGeometry(top,bottom,height,24),material);mesh.position.set(x,y,z);mesh.castShadow=true;mesh.receiveShadow=true;parent.add(mesh);return mesh;
  }
- const floor=new THREE.Mesh(new THREE.PlaneGeometry(6,5),new THREE.MeshStandardMaterial({color:'#d8bea0',roughness:.95}));floor.rotation.x=-Math.PI/2;floor.position.set(0,.0002,-.35);floor.receiveShadow=true;room.add(floor);
+ const floor=new THREE.Mesh(new THREE.PlaneGeometry(6,5),new THREE.MeshStandardMaterial({color:'#d8bea0',roughness:.95,polygonOffset:true,polygonOffsetFactor:1,polygonOffsetUnits:1}));floor.rotation.x=-Math.PI/2;floor.position.set(0,0,-.35);floor.receiveShadow=true;room.add(floor);
  const lines:THREE.Vector3[]=[];
- for(let x=-3;x<=3;x+=.3)lines.push(new THREE.Vector3(x,.0004,-2.85),new THREE.Vector3(x,.0004,2.15));
- for(let i=0;i<20;i++){const x=-3+i*.3;for(let z=-2.85+(i%3)*.6;z<2.15;z+=1.8)lines.push(new THREE.Vector3(x,.0004,z),new THREE.Vector3(x+.3,.0004,z));}
+ for(let x=-3;x<=3;x+=.3)lines.push(new THREE.Vector3(x,.001,-2.85),new THREE.Vector3(x,.001,2.15));
+ for(let i=0;i<20;i++){const x=-3+i*.3;for(let z=-2.85+(i%3)*.6;z<2.15;z+=1.8)lines.push(new THREE.Vector3(x,.001,z),new THREE.Vector3(x+.3,.001,z));}
  room.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(lines),new THREE.LineBasicMaterial({color:'#c7ac8d',transparent:true,opacity:.55})));
  const sofa=new THREE.Group();sofa.position.set(SOFA.x,0,SOFA.z);room.add(sofa);
  for(const x of [-.85,.85])for(const z of [-.3,.3])box(sofa,wood,x,.1,z,.07,.2,.07);
