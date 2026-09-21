@@ -73,3 +73,10 @@ main>header{flex-shrink:0;padding:14px 22px}
 
 .voice-panel h3{margin:24px 0 12px}.voice-cues{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0}.voice-check{display:flex;gap:10px;align-items:center;margin:14px 0;font-size:14px}.voice-slider{display:grid;gap:8px;margin:18px 0;font-size:14px}.voice-slider input{width:100%;accent-color:#365d81}.voice-readout{display:grid;gap:10px;padding:16px;background:#edf3f8;border-radius:12px;margin:16px 0}.voice-readout label{display:flex;gap:12px;align-items:center;font-size:14px}.voice-readout meter{flex:1;min-width:0}.voice-events{padding-left:20px;font-size:14px;line-height:1.6}.voice-events li{margin:8px 0}.control-nav{overflow-x:auto;flex-shrink:0}.control-nav [data-slot=tabs-trigger]{flex-shrink:0}
 .sequence-save{margin:18px 0;padding:16px;border:1px solid #d9ded8;border-radius:12px}.sequence-save>label{display:block;margin-bottom:8px;font-weight:600}.sequence-save>div{display:flex;flex-wrap:wrap;gap:8px}.sequence-save input{min-width:0;flex:1 1 150px;padding:10px;border:1px solid #b7c3bc;border-radius:8px;font:inherit}.sequence-save button{flex:1 1 160px}.sequence-save [role=alert]{color:#9e3434}
+
+/* Enlarge the existing scene without remounting the simulation. */
+.view-footer .expand-simulation{width:40px;min-width:40px;height:40px;padding:8px;justify-content:center}
+.expand-simulation:focus-visible{outline:3px solid #345cf0;outline-offset:2px}
+.simulation-expanded>header,.simulation-expanded>.boo-roster,.simulation-expanded>footer,.simulation-expanded .control-dock{display:none!important}
+.simulation-expanded .workspace.lab-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);margin:8px;gap:0}
+@media(max-width:800px){.lab-layout .view-footer .expand-simulation{width:36px;min-width:36px;height:36px;padding:7px}.simulation-expanded .workspace.lab-layout{margin:4px}}
