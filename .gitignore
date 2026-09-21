@@ -52,3 +52,8 @@ next-env.d.ts
 # Browser test reports
 /test-results/
 /playwright-report/
+
+# Version the asset protection build step.
+!/scripts/
+/scripts/*
+!/scripts/seal-assets.mjs

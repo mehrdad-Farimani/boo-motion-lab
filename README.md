@@ -78,3 +78,5 @@ Run `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. For th
 Only the four UI primitives used by the simulator are kept. The original procedural robot was superseded by the CAD model. CAD exports, URDF references and mechanical packages in ignored output folders are retained intentionally. The Draco JavaScript decoder is kept as a fallback for the WASM decoder.
 
 The sharp override pins the patched 0.35.4 release for the local Cloudflare tooling; revisit it when the upstream dependency catches up. Dependency audit on 2026-09-09 reported zero known vulnerabilities after the framework update. This does not replace testing on real hardware.
+
+Protected assets are encrypted during the build with the BOO_ASSET_KEY server secret and decrypted only after password verification. The deployment contains no unprotected copies at their original paths. Build with BOO_ASSET_KEY, then run node scripts/seal-assets.mjs before packaging. Never place either secret in source or browser code.
