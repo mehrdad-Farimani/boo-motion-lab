@@ -2,6 +2,11 @@
 export function isHelloBoo(transcript:string){
  return /(?:^|\s)hello\s+boo(?:\s|$)/u.test(transcript.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim());
 }
+export function eyelidVoiceTarget(transcript:string):0|100|null{
+ const text=transcript.toLowerCase().replace(/[^\p{L}\p{N}]+/gu,' ').trim();
+ const open=isHelloBoo(text),close=/(?:^|\s)good\s*bye\s+boo(?:\s|$)/u.test(text);
+ return open===close?null:open?0:100;
+}
 type Result={isFinal:boolean;length:number;[index:number]:{transcript:string;confidence?:number}};
 export type RecognitionEvent={resultIndex:number;results:{length:number;[index:number]:Result}};
 export type Recognizer={
@@ -28,13 +33,14 @@ export class HelloBooListener{
  private timer:ReturnType<typeof setTimeout>|null=null;
  private wanted=false;
  private lastWake=-Infinity;
+ private lastTarget:0|100|null=null;
  private rapidEnds=0;
  constructor(create:()=>Recognizer,onState:(state:ListenerState)=>void,onPhrase:(transcript:string,matched:boolean)=>void){
   this.create=create;this.onState=onState;this.onPhrase=onPhrase;
  }
  start(){
   if(this.wanted)return;
-  this.wanted=true;this.lastWake=-Infinity;this.rapidEnds=0;this.begin();
+  this.wanted=true;this.lastWake=-Infinity;this.lastTarget=null;this.rapidEnds=0;this.begin();
  }
  stop(status='Microphone off'){
   this.wanted=false;if(this.timer)clearTimeout(this.timer);this.timer=null;
@@ -51,7 +57,7 @@ export class HelloBooListener{
   r.continuous=true;r.interimResults=false;r.lang='en-US';r.maxAlternatives=1;
   let seen=0;const began=Date.now(),valid=()=>this.wanted&&this.recognizer===r;
   this.onState({active:true,status:'Starting microphone…'});
-  r.onstart=()=>{if(valid())this.onState({active:true,status:'Listening · say “Hello Boo”'});};
+  r.onstart=()=>{if(valid())this.onState({active:true,status:'Listening · say “Hello Boo” or “Goodbye Boo”'});};
   r.onprogress=status=>{if(valid())this.onState({active:true,status});};
   r.onresult=event=>{
    if(!valid())return;
@@ -59,8 +65,9 @@ export class HelloBooListener{
     const result=event.results[i];if(!result.isFinal)continue;
     seen=i+1;const transcript=result[0]?.transcript.trim()??'';
     if(!transcript)continue;
-    const matched=isHelloBoo(transcript)&&(result[0]?.confidence??1)>=.7&&Date.now()-this.lastWake>=2500;
-    if(matched)this.lastWake=Date.now();
+    const target=eyelidVoiceTarget(transcript);
+    const matched=target!==null&&(result[0]?.confidence??1)>=.7&&(target!==this.lastTarget||Date.now()-this.lastWake>=2500);
+    if(matched){this.lastWake=Date.now();this.lastTarget=target;}
     this.onPhrase(transcript,matched);
     if(!valid())break;
    }

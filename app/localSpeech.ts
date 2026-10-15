@@ -52,7 +52,7 @@ export class LocalRecognizer implements Recognizer{
    model.on('error',()=>finish(new Error('Model unavailable')));
   });
   if(this.stopped)return;
-  const recognizer=new model.KaldiRecognizer(context.sampleRate,JSON.stringify(['hello boo','[unk]']));this.recognizer=recognizer;recognizer.setWords(true);
+  const recognizer=new model.KaldiRecognizer(context.sampleRate,JSON.stringify(['hello boo','goodbye boo','good bye boo','[unk]']));this.recognizer=recognizer;recognizer.setWords(true);
   let index=0;
   recognizer.on('result',message=>{
    if(this.stopped||message.event!=='result'||!message.result.text)return;

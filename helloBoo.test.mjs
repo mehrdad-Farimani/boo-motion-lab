@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {HelloBooListener,isHelloBoo} from './app/helloBoo.ts';
+import {HelloBooListener,isHelloBoo,eyelidVoiceTarget} from './app/helloBoo.ts';
 import {lidsToSteps,RIG} from './app/eyelidProtocol.ts';
 
 function setup(){
@@ -16,6 +16,18 @@ const event=(text,final=true)=>({resultIndex:0,results:[{0:{transcript:text},len
 test('Hello Boo recognizes whole words with punctuation, not similar words',()=>{
  for(const text of ['Hello Boo','HELLO, BOO!','Well, hello Boo.'])assert.equal(isHelloBoo(text),true,text);
  for(const text of ['hello','Boo','hello booth','hello book','hello beautiful Boo','nothello boo'])assert.equal(isHelloBoo(text),false,text);
+});
+test('Goodbye Boo closes to the calibrated endpoint and ambiguous phrases do nothing',()=>{
+ for(const phrase of ['Goodbye Boo','GOOD BYE, BOO!','okay goodbye boo'])assert.equal(eyelidVoiceTarget(phrase),100);
+ for(const phrase of ['goodbye','goodbye booth','hello boo goodbye boo','bye boo'])assert.equal(eyelidVoiceTarget(phrase),null);
+ assert.equal(eyelidVoiceTarget('hello boo'),0);assert.equal(lidsToSteps(100),RIG.closed);
+});
+test('an opposite command works immediately; repeated commands are debounced',()=>{
+ const {listener,recognizers,phrases}=setup();listener.start();const results=[];
+ for(const phrase of ['hello boo','goodbye boo','goodbye boo','hello boo']){
+  results.push(event(phrase).results[0]);recognizers[0].onresult({resultIndex:results.length-1,results});
+ }
+ assert.deepEqual(phrases.map(p=>p.match),[true,true,false,true]);listener.stop();
 });
 test('only new final results trigger once, with a cooldown; open maps to calibrated rig endpoint',()=>{
  const {listener,recognizers,phrases}=setup();listener.start();const r=recognizers[0];

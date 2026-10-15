@@ -5,6 +5,7 @@ import type {Hardware,Telemetry} from './hardware';
 import type {Pose,Frame} from './motion';
 import {CUES,SOUNDS,hearing,voiceResponse,type Cue,type Sound} from './voice';
 import {useHelloBoo} from './useHelloBoo';
+import {eyelidVoiceTarget} from './helloBoo';
 type Controller={commandRevision:number;pose:Pose;body:BodyPose;hardware:Hardware;telemetry:Telemetry;playVoice:(name:string,frames:Frame[])=>void;manual:(key:keyof Pose,value:number)=>void};
 type Feed={reset:number;status:string;sound?:Sound;until:number;left:number;right:number};
 export default function VoicePanel({controllers,present,selected,human,setHuman}:{controllers:Controller[];present:number[];selected:number;human:Hardware['human'];setHuman:React.Dispatch<React.SetStateAction<Hardware['human']>>}){
@@ -21,6 +22,7 @@ export default function VoicePanel({controllers,present,selected,human,setHuman}
  }
  function stopAudio(){generation.current++;timers.current.forEach(clearTimeout);timers.current=[];window.speechSynthesis?.cancel();void audio.current?.close();audio.current=null;setBusy(false);setFeed({});}
  const microphone=useHelloBoo(selected+':'+controllers[selected].hardware.resetSerial,phrase=>{
+  const target=eyelidVoiceTarget(phrase);if(target===null)return;
   stopAudio();
   const current=controllers[selected];
   if(!present.includes(selected))return;
@@ -28,9 +30,10 @@ export default function VoicePanel({controllers,present,selected,human,setHuman}
   if(!servo.enabled||servo.blocked||current.telemetry.servos.find(s=>s.key==='lids')?.fault){
    log('Boo '+(selected+1)+' · Heard “'+phrase+'” · eyelid servo unavailable; enable torque and clear protection.');return;
   }
-  current.manual('lids',0);
-  setFeed(f=>({...f,[selected]:{reset:current.hardware.resetSerial,status:'Hello Boo · eyelids open',until:Date.now()+6000,left:0,right:0}}));
-  log('Boo '+(selected+1)+' · PC microphone: “'+phrase+'” → eyelids fully open · connected rig follows if enabled.');
+  current.manual('lids',target);
+  const position=target===0?'open':'closed';
+  setFeed(f=>({...f,[selected]:{reset:current.hardware.resetSerial,status:(target===0?'Hello Boo':'Goodbye Boo')+' · eyelids '+position,until:Date.now()+6000,left:0,right:0}}));
+  log('Boo '+(selected+1)+' · PC microphone: “'+phrase+'” → eyelids fully '+position+' · connected rig follows if enabled.');
  },stopAudio);
  function stop(){microphone.stop();stopAudio();}
  useEffect(()=>()=>{timers.current.forEach(clearTimeout);window.speechSynthesis?.cancel();void audio.current?.close();},[]);
@@ -61,15 +64,15 @@ export default function VoicePanel({controllers,present,selected,human,setHuman}
  return <section className="voice-panel"><span className="overline">VOICE & HEARING / BOO {selected+1}</span><h2>Talk to Boo</h2><p className="muted">Say hello through your PC microphone, or explore scripted cues and Boo’s sounds below.</p>
  <section className={'microphone-card'+(microphone.active?' is-listening':'')} aria-label="PC microphone">
   <div className="microphone-heading"><h3>PC microphone</h3><span>{microphone.active?(microphone.status.startsWith('Listening')?'● LIVE':'◌ STARTING'):'○ OFF'}</span></div>
-  <p>Say <strong>“Hello Boo”</strong> to fully open Boo {selected+1}’s eyelids.</p>
+  <p><strong>“Hello Boo”</strong> opens Boo {selected+1}’s eyelids.<br/><strong>“Goodbye Boo”</strong> closes them.</p>
   <div className="voice-cues"><button className="primary" disabled={microphone.supported!==true||microphone.active} onClick={microphone.start}>Start microphone</button><button disabled={!microphone.active} onClick={()=>microphone.stop()}>Stop microphone</button></div>
   <output className="microphone-status" aria-live="polite">{microphone.status}</output>
   <label className="microphone-level">Microphone input <meter min={0} max={100} value={microphone.level}/></label>
-  {microphone.transcript&&<p className="microphone-transcript">Heard: “{microphone.transcript}”</p>}
+  {microphone.transcript&&<p className="microphone-transcript">Heard: “{microphone.transcript.replaceAll('[unk]','…')}”</p>}
   {microphone.supported===false&&<p role="alert">Microphone audio is unavailable here. Open this simulation over HTTPS or localhost in a current browser.</p>}
   {microphone.error&&<p role="alert">{microphone.error}</p>}
   <p className="muted">Uses your PC’s default microphone. English recognition runs on your device; audio stays in this browser and is not recorded. First use downloads a speech model (about 40 MB). Say the phrase, then briefly pause.</p>
-  <p className="muted">To move the real eyelids too, enable following in <strong>Sensors & Rig</strong> on this same page. “Hello Boo” pauses movements and scenarios and holds the eyes open. Switching Boo, resetting, or hiding the page stops listening.</p>
+  <p className="muted">To move the real eyelids too, enable following in <strong>Sensors & Rig</strong> on this same page. Both phrases pause movements and scenarios and hold the requested eyelid position. Switching Boo, resetting, or hiding the page stops listening.</p>
  </section>
  <h3>Scripted voice cues</h3><p className="muted">These buttons simulate hearing from the person in the scene. Choosing a cue stops the PC microphone so Boo cannot hear its own spoken prompt.</p>
  <div className="voice-cues">{CUES.map(cue=><button key={cue} disabled={busy} onClick={()=>send(cue)}>{cue}</button>)}</div>
