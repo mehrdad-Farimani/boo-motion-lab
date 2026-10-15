@@ -80,3 +80,5 @@ main>header{flex-shrink:0;padding:14px 22px}
 .simulation-expanded>header,.simulation-expanded>.boo-roster,.simulation-expanded>footer,.simulation-expanded .control-dock{display:none!important}
 .simulation-expanded .workspace.lab-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);margin:8px;gap:0}
 @media(max-width:800px){.lab-layout .view-footer .expand-simulation{width:36px;min-width:36px;height:36px;padding:7px}.simulation-expanded .workspace.lab-layout{margin:4px}}
+
+.eyelid-rig{padding:20px;margin-bottom:20px;border:1px solid #a9bdb3;border-radius:16px;background:#f5f9f6}.eyelid-rig .rig-stop{color:#8c2929;border-color:#cb8585;background:#fff1f1}.rig-error{color:#9e3030}.eyelid-rig .readings{flex-wrap:wrap}.eyelid-rig strong{font-size:16px}

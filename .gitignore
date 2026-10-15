@@ -57,3 +57,6 @@ next-env.d.ts
 !/scripts/
 /scripts/*
 !/scripts/seal-assets.mjs
+
+# Local Worker secrets
+.dev.vars*

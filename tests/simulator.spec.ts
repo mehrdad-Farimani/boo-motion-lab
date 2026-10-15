@@ -29,7 +29,7 @@ test('five Boos, voice cancellation, sensors, import/export and responsive layou
  await expect(page.locator('.voice-events')).not.toContainText('→');
  await page.getByRole('button',{name:'Hello Boo',exact:true}).click();
  await expect(page.locator('.voice-events')).toContainText('Boo 1 · Hello Boo →',{timeout:8000});
- await page.getByRole('tab',{name:'Sensors',exact:true}).click();
+ await page.getByRole('tab',{name:'Sensors & Rig',exact:true}).click();
  await page.getByRole('button',{name:'Tap head',exact:true}).click();
  await expect(page.getByRole('switch',{name:'Hold head touch'})).toHaveAttribute('aria-checked','true');
  await expect(page.getByRole('switch',{name:'Hold head touch'})).toHaveAttribute('aria-checked','false',{timeout:3000});
