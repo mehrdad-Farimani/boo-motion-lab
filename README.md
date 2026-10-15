@@ -18,7 +18,8 @@ Open http://localhost:3000 in a browser with WebGL enabled. The supplied GLB and
 - **Add Boo** adds another robot, up to five. Select its name or interact with it in the scene.
 - **Joints** controls two arms, neck yaw/pitch and paired upper eyelids driven by one motor.
 - **Body** changes placement and posture, including belly sleeping, sitting and sleeping on the back. Legs are passive.
-- **Sensors** simulates touch, MPU6050 orientation, LD2420 human detection and SCS0009 servo states.
+- **Sensors & Rig** simulates sensors and servo states, and connects the physical eyelid rig over USB.
+- **Voice & Hearing** listens to the PC microphone for “Hello Boo” and opens the selected Boo’s eyelids. Enable USB following on the same page to move the rig too.
 - **Scenarios** configures sensor reactions separately for each Boo.
 - **Sequence** captures, plays, imports and exports joint movements for the selected Boo.
 - The person, target and ball are shared scene objects. Robot-to-robot collisions are not modeled.
@@ -69,7 +70,15 @@ No open-source license is granted for the Boo-specific code or design assets by 
 
 The Voice & Hearing tab sends five scripted phrases or a loud-sound cue from the shared person marker. Use Person X/Z or movement to position the source; each Boo uses distance, yaw, noise and sleep state to evaluate detection independently. Selected-only mode isolates a test. Left/right meters are illustrative, not a model of a specific microphone.
 
-Browser speech synthesis speaks the phrases where available; Web Audio generates six placeholder vocal sounds. No microphone is recorded, no speech is recognized, and no LLM is connected. Touch held during speech produces a contented response. Repeated recognized calls within 15 seconds wake a sleepy Boo. Voice motion temporarily suspends sensor scenarios and restores them after completion; manual joint commands take priority. Audio can be muted, previewed, replayed or stopped independently of the existing movement Pause control.
+Browser speech synthesis speaks the scripted phrases where available; Web Audio generates six placeholder vocal sounds. No LLM is connected. Touch held during scripted speech produces a contented response. Repeated scripted calls within 15 seconds wake a sleepy Boo. Scripted voice motion temporarily suspends sensor scenarios and restores them after completion; manual joint commands take priority.
+
+### Live PC microphone
+
+In **Voice & Hearing**, select **Start microphone**, allow access, wait for **Listening**, then say **“Hello Boo”** and pause. A complete recognized phrase sets only the selected Boo’s eyelids to 0% closed, pauses sequences and sensor scenarios, and holds that pose. With **Sensors & Rig → Enable following** active, the physical SCS0009 (ID 2, COM6, 1 Mbaud) follows toward the calibrated open position of 511 steps / 149.9°, at the existing 100 steps/s limit. Microphone use never connects or enables hardware automatically.
+
+Speech recognition uses [vosk-browser](https://github.com/ccoreilly/vosk-browser) and the [small US English model](https://alphacephei.com/vosk/models), both Apache-2.0. The recognizer is loaded only when requested. First use downloads about 40 MB from the vosk-browser project's model hosting; its worker caches model data in IndexedDB. Audio is processed on the user's device with an AudioWorklet and background recognition worker. No microphone audio is uploaded, recorded, or persisted by this app. The last recognized text and activity log live only in page memory. This avoids relying on embedded browsers' unavailable Web Speech services.
+
+The input meter shows actual microphone activity; the two directional meters below remain simulated. Only complete final phrases with adequate confidence can trigger movement, with a 2.5 s cooldown. Stop microphone, switching Boo, resetting, hiding the page, or choosing a scripted cue stops listening and releases microphone resources. Scripted speech stops listening before speaking to prevent self-triggering. Stop microphone does not stop an already commanded servo move; use **Stop & release** for that.
 
 ## Regression checks and maintenance
 
